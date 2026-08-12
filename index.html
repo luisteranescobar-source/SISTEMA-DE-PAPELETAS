@@ -236,6 +236,12 @@
             return `${dia}/${mes}/${anio} ${hora}:${min}:${seg}`;
         }
 
+        function limpiarFechaYMD(fechaStr) {
+            if (!fechaStr) return "";
+            // Si viene con formato ISO de Google Sheets, extrae solo la parte YYYY-MM-DD
+            return String(fechaStr).split('T')[0];
+        }
+
         function renderizarTabla() {
             const tbody = document.getElementById('tablaRegistros');
             const sinRegistros = document.getElementById('sinRegistros');
@@ -249,12 +255,15 @@
             }
 
             registrosGlobales.forEach((reg) => {
+                const fInicio = limpiarFechaYMD(reg.fechaInicio);
+                const fTermino = limpiarFechaYMD(reg.fechaTermino);
+
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td class="px-4 py-4 whitespace-nowrap text-xs text-slate-400 font-medium">${reg.fechaRegistro}</td>
                     <td class="px-4 py-4 whitespace-nowrap text-sm font-semibold text-white">${reg.nombre}</td>
                     <td class="px-4 py-4 whitespace-nowrap text-sm text-slate-300">${reg.dias} días<br><span class="text-xs text-gold-custom">${reg.ciudad}</span></td>
-                    <td class="px-4 py-4 whitespace-nowrap text-sm text-slate-300">${reg.fechaInicio} al <br>${reg.fechaTermino}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-slate-300">${fInicio} al <br>${fTermino}</td>
                     <td class="px-4 py-4 whitespace-nowrap text-center text-sm font-medium">
                         <button onclick="generarWord(${reg.id})" class="btn-gold-custom text-slate-950 px-3 py-1.5 rounded font-bold text-xs uppercase tracking-wider transition-colors shadow">Imprimir Word</button>
                     </td>
@@ -265,7 +274,8 @@
 
         function formatearFechaLarga(fechaStr) {
             const meses = ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"];
-            const date = new Date(fechaStr + 'T00:00:00'); 
+            const cleanDate = limpiarFechaYMD(fechaStr);
+            const date = new Date(cleanDate + 'T00:00:00'); 
             const diaNum = date.getDate();
             const mes = meses[date.getMonth()];
             const anio = date.getFullYear();
@@ -275,7 +285,8 @@
         function formatearFechaPermiso(fechaStr) {
             const diasSemana = ["DOMINGO", "LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES", "SABADO"];
             const meses = ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"];
-            const date = new Date(fechaStr + 'T00:00:00'); 
+            const cleanDate = limpiarFechaYMD(fechaStr);
+            const date = new Date(cleanDate + 'T00:00:00'); 
             const dia = diasSemana[date.getDay()];
             const diaNum = date.getDate();
             const mes = meses[date.getMonth()];
