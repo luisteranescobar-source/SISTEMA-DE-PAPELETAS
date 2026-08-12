@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SISTEMA DE PAPELETAS DE PERMISO</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Librerías para Word -->
+    <script src="https://unpkg.com/pizzip@3.1.4/dist/pizzip.min.js"></script>
+    <script src="https://unpkg.com/docxtemplater@3.37.2/build/docxtemplater.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        :root {
+            --military-navy: #1b2a4a;
+            --military-gold: #c5a059;
+            --military-red: #990000;
+        }
+        .bg-navy-custom { background-color: var(--military-navy); }
+        .text-gold-custom { color: var(--military-gold); }
+        .border-gold-custom { border-color: var(--military-gold); }
+        .btn-gold-custom { background-color: var(--military-gold); color: #111; }
+        .btn-gold-custom:hover { background-color: #b08d4c; }
+    </style>
+</head>
+<body class="bg-slate-900 font-sans text-slate-100 min-h-screen flex flex-col justify-between">
+
+    <!-- Barra Superior Sutil con Identificación Militar -->
+    <div class="bg-slate-950 border-b border-slate-800 py-2 px-6 flex justify-between items-center text-xs tracking-wider text-slate-400">
+        <span class="font-semibold text-gold-custom">BTN COM ABASTO MANTO N° 511</span>
+        <span>EJÉRCITO DEL PERÚ</span>
+    </div>
+
+    <div class="container mx-auto p-6 max-w-6xl flex-grow">
+        <header class="mb-8 text-center">
+            <div class="inline-block p-3 rounded-full bg-navy-custom border border-gold-custom shadow-lg mb-3">
+                <svg class="w-10 h-10 text-gold-custom mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            </div>
+            <h1 class="text-3xl font-bold tracking-wide text-white uppercase">SISTEMA DE PAPELETAS DE PERMISO</h1>
+            <p class="text-slate-400 text-sm mt-1">Módulo de control de personal y emisión automatizada de documentos</p>
+        </header>
+
+        <!-- Pestañas de Navegación Estilo Militar -->
+        <div class="flex justify-center mb-6 border-b border-slate-800">
+            <button onclick="cambiarVista('registro')" id="btn-registro" class="py-2 px-6 font-semibold border-b-2 border-gold-custom text-gold-custom transition-all">Formulario de Registro</button>
+            <button onclick="solicitarClaveAdmin()" id="btn-admin" class="py-2 px-6 font-semibold text-slate-400 hover:text-white transition-all">Panel de Administración</button>
+        </div>
+
+        <!-- VISTA 1: FORMULARIO DE REGISTRO -->
+        <div id="vista-registro" class="bg-slate-950 border border-slate-800 p-8 rounded-xl shadow-xl max-w-xl mx-auto">
+            <h2 class="text-lg font-bold mb-4 text-gold-custom uppercase tracking-wider border-b border-slate-800 pb-2">Registro de Solicitud</h2>
+            <form id="formRegistro" onsubmit="guardarRegistro(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs uppercase font-semibold text-slate-300">Nombre Completo</label>
+                    <input type="text" id="nombre" required class="mt-1 block w-full rounded bg-slate-900 border border-slate-700 p-2 text-white shadow-sm focus:border-gold-custom focus:ring-gold-custom">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs uppercase font-semibold text-slate-300">Cantidad de Días</label>
+                        <select id="dias" onchange="calcularFechaTermino()" required class="mt-1 block w-full rounded bg-slate-900 border border-slate-700 p-2 text-white shadow-sm focus:border-gold-custom">
+                            <option value="">Seleccione...</option>
+                            <script>
+                                for(let i=1; i<=30; i++) document.write(`<option value="${i}">${i}</option>`);
+                            </script>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase font-semibold text-slate-300">Ciudad</label>
+                        <input type="text" id="ciudad" required class="mt-1 block w-full rounded bg-slate-900 border border-slate-700 p-2 text-white shadow-sm focus:border-gold-custom">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs uppercase font-semibold text-slate-300">Fecha de Inicio</label>
+                        <input type="date" id="fechaInicio" onchange="calcularFechaTermino()" required class="mt-1 block w-full rounded bg-slate-900 border border-slate-700 p-2 text-white shadow-sm focus:border-gold-custom">
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase font-semibold text-slate-300">Fecha de Término</label>
+                        <input type="date" id="fechaTermino" required readonly class="mt-1 block w-full rounded bg-slate-900 border border-slate-800 p-2 text-slate-400 shadow-sm cursor-not-allowed">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs uppercase font-semibold text-slate-300">Dirección</label>
+                    <input type="text" id="direccion" required class="mt-1 block w-full rounded bg-slate-900 border border-slate-700 p-2 text-white shadow-sm focus:border-gold-custom">
+                </div>
+                <div>
+                    <label class="block text-xs uppercase font-semibold text-slate-300">Teléfono</label>
+                    <input type="tel" id="telefono" required class="mt-1 block w-full rounded bg-slate-900 border border-slate-700 p-2 text-white shadow-sm focus:border-gold-custom">
+                </div>
+                <button type="submit" class="w-full btn-gold-custom font-bold py-2.5 px-4 rounded transition-colors uppercase tracking-wider text-xs">Enviar Solicitud</button>
+            </form>
+        </div>
+
+        <!-- VISTA 2: PANEL DE ADMINISTRACIÓN -->
+        <div id="vista-admin" class="hidden bg-slate-950 border border-slate-800 p-8 rounded-xl shadow-xl">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                <h2 class="text-lg font-bold text-gold-custom uppercase tracking-wider">Registros Recibidos</h2>
+                
+                <div class="flex items-center gap-2 bg-slate-900 p-3 rounded-lg border border-slate-800">
+                    <label class="text-xs uppercase font-semibold text-slate-300">Plantilla Word (.docx):</label>
+                    <input type="file" id="inputPlantilla" accept=".docx" class="text-xs text-slate-400 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-navy-custom file:text-gold-custom hover:file:bg-slate-800">
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-800">
+                    <thead class="bg-slate-900">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Fecha Registro</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Nombre</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Días / Ciudad</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Fechas Permiso</th>
+                            <th class="px-4 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaRegistros" class="divide-y divide-slate-800 bg-slate-950"></tbody>
+                </table>
+            </div>
+            <div id="sinRegistros" class="text-center py-8 text-slate-500 hidden">No hay registros guardados todavía.</div>
+        </div>
+    </div>
+
+    <!-- Pie de página institucional -->
+    <footer class="bg-slate-950 border-t border-slate-800 py-3 text-center text-xs text-slate-500 mt-8">
+        Sistema Automatizado de Papeletas &bull; BTN COM ABASTO MANTO N° 511
+    </footer>
+
+    <!-- Script de Lógica -->
+    <script>
+        let registros = JSON.parse(localStorage.getItem('registros_sistema')) || [];
+        const CLAVE_ADMIN = "511"; // Puedes cambiar esta contraseña si lo deseas
+
+        function solicitarClaveAdmin() {
+            const password = prompt("Ingrese la clave de acceso para el Panel de Administración:");
+            if (password === CLAVE_ADMIN) {
+                cambiarVista('admin');
+            } else if (password !== null) {
+                alert("Clave incorrecta. Acceso denegado.");
+            }
+        }
+
+        function cambiarVista(vista) {
+            const vRegistro = document.getElementById('vista-registro');
+            const vAdmin = document.getElementById('vista-admin');
+            const bRegistro = document.getElementById('btn-registro');
+            const bAdmin = document.getElementById('btn-admin');
+
+            if (vista === 'registro') {
+                vRegistro.classList.remove('hidden');
+                vAdmin.classList.add('hidden');
+                bRegistro.className = "py-2 px-6 font-semibold border-b-2 border-gold-custom text-gold-custom transition-all";
+                bAdmin.className = "py-2 px-6 font-semibold text-slate-400 hover:text-white transition-all";
+            } else {
+                vRegistro.classList.add('hidden');
+                vAdmin.classList.remove('hidden');
+                bAdmin.className = "py-2 px-6 font-semibold border-b-2 border-gold-custom text-gold-custom transition-all";
+                bRegistro.className = "py-2 px-6 font-semibold text-slate-400 hover:text-white transition-all";
+                renderizarTabla();
+            }
+        }
+
+        function calcularFechaTermino() {
+            const inicio = document.getElementById('fechaInicio').value;
+            const dias = parseInt(document.getElementById('dias').value);
+            if (inicio && dias) {
+                const date = new Date(inicio + 'T00:00:00');
+                date.setDate(date.getDate() + (dias - 1));
+                document.getElementById('fechaTermino').value = date.toISOString().split('T')[0];
+            }
+        }
+
+        function guardarRegistro(event) {
+            event.preventDefault();
+            const ahora = obtenerFechaHoraActual();
+
+            const nuevoRegistro = {
+                id: Date.now(),
+                fechaRegistro: ahora,
+                nombre: document.getElementById('nombre').value,
+                dias: document.getElementById('dias').value,
+                ciudad: document.getElementById('ciudad').value,
+                fechaInicio: document.getElementById('fechaInicio').value,
+                fechaTermino: document.getElementById('fechaTermino').value,
+                direccion: document.getElementById('direccion').value,
+                telefono: document.getElementById('telefono').value
+            };
+
+            registros.push(nuevoRegistro);
+            localStorage.setItem('registros_sistema', JSON.stringify(registros));
+
+            alert('¡Datos enviados con éxito!');
+            document.getElementById('formRegistro').reset();
+            
+            // Al enviar con éxito, pide la clave para llevarlo directo al panel de administración validado
+            solicitarClaveAdmin();
+        }
+
+        function obtenerFechaHoraActual() {
+            const d = new Date();
+            const dia = String(d.getDate()).padStart(2, '0');
+            const mes = String(d.getMonth() + 1).padStart(2, '0');
+            const anio = d.getFullYear();
+            const hora = String(d.getHours()).padStart(2, '0');
+            const min = String(d.getMinutes()).padStart(2, '0');
+            const seg = String(d.getSeconds()).padStart(2, '0');
+            return `${dia}/${mes}/${anio} ${hora}:${min}:${seg}`;
+        }
+
+        function renderizarTabla() {
+            const tbody = document.getElementById('tablaRegistros');
+            const sinRegistros = document.getElementById('sinRegistros');
+            tbody.innerHTML = '';
+
+            if (registros.length === 0) {
+                sinRegistros.classList.remove('hidden');
+                return;
+            } else {
+                sinRegistros.classList.add('hidden');
+            }
+
+            registros.forEach((reg) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="px-4 py-4 whitespace-nowrap text-xs text-slate-400 font-medium">${reg.fechaRegistro}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm font-semibold text-white">${reg.nombre}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-slate-300">${reg.dias} días<br><span class="text-xs text-gold-custom">${reg.ciudad}</span></td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-slate-300">${reg.fechaInicio} al <br>${reg.fechaTermino}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-center text-sm font-medium">
+                        <button onclick="generarWord(${reg.id})" class="btn-gold-custom text-slate-950 px-3 py-1.5 rounded font-bold text-xs uppercase tracking-wider transition-colors shadow">Imprimir Word</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function formatearFechaLarga(fechaStr) {
+            const meses = ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"];
+            const date = new Date(fechaStr + 'T00:00:00'); 
+            const diaNum = date.getDate();
+            const mes = meses[date.getMonth()];
+            const anio = date.getFullYear();
+            
+            return `${diaNum} DE ${mes} DEL ${anio}`;
+        }
+
+        function formatearFechaPermiso(fechaStr) {
+            const diasSemana = ["DOMINGO", "LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES", "SABADO"];
+            const meses = ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"];
+            const date = new Date(fechaStr + 'T00:00:00'); 
+            const dia = diasSemana[date.getDay()];
+            const diaNum = date.getDate();
+            const mes = meses[date.getMonth()];
+            const anio = date.getFullYear();
+            
+            return `${dia} ${diaNum} DE ${mes} DEL ${anio}`;
+        }
+
+        function convertirDiasATexto(num) {
+            const unidades = ["", "UN", "DOS", "TRES", "CUATRO", "CINCO", "SEIS", "SIETE", "OCHO", "NUEVE", "DIEZ", "ONCE", "DOCE", "TRECE", "CATORCE", "QUINCE", "DIECISEIS", "DIECISIETE", "DIECIOCHO", "DIECINUEVE", "VEINTE", "VEINTIUN", "VEINTIDOS", "VEINTITRES", "VEINTICUATRO", "VEINTICINCO", "VEINTISEIS", "VEINTISIETE", "VEINTIOCHO", "VEINTINUEVE", "TREINTA"];
+            const strNum = num.toString().padStart(2, '0');
+            const palabra = unidades[parseInt(num)];
+            return `${palabra} (${strNum}) ${num == 1 ? 'DIA' : 'DIAS'}`;
+        }
+
+        async function generarWord(id) {
+            const fileInput = document.getElementById('inputPlantilla');
+            
+            if (fileInput.files.length === 0) {
+                alert('Por favor, seleccione primero el archivo de plantilla Word (.docx) en la parte superior.');
+                return;
+            }
+
+            const registro = registros.find(r => r.id === id);
+            const archivo = fileInput.files[0];
+            const hoyStr = new Date().toISOString().split('T')[0];
+
+            const reader = new FileReader();
+            reader.readAsArrayBuffer(archivo);
+            reader.onload = function(e) {
+                try {
+                    const content = e.target.result;
+                    const zip = new PizZip(content);
+                    const doc = new window.docxtemplater(zip, {
+                        paragraphLoop: true,
+                        linebreaks: true,
+                    });
+
+                    doc.render({
+                        nombre: registro.nombre.toUpperCase(),
+                        dias: convertirDiasATexto(registro.dias),
+                        ciudad: registro.ciudad.toUpperCase(),
+                        fechaInicio: formatearFechaPermiso(registro.fechaInicio),
+                        fechaTermino: formatearFechaPermiso(registro.fechaTermino),
+                        direccion: registro.direccion.toUpperCase(),
+                        telefono: registro.telefono,
+                        fechaActual: formatearFechaLarga(hoyStr)
+                    });
+
+                    const out = doc.getZip().generate({
+                        type: "blob",
+                        mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    });
+
+                    saveAs(out, `Papeleta_${registro.nombre.replace(/\s+/g, '_')}.docx`);
+                } catch (error) {
+                    console.error(error);
+                    alert('Error al procesar la plantilla. Revisa la consola (F12) para más detalles.');
+                }
+            };
+        }
+    </script>
+</body>
+</html>
