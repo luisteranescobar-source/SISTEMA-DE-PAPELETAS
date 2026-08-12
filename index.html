@@ -127,9 +127,7 @@
 
     <!-- Script de Lógica -->
     <script>
-        // PEGA AQUÍ LA URL DE TU APLICACIÓN WEB DE GOOGLE SHEETS ENTRE LAS COMILLAS:
         const URL_API = "https://script.google.com/macros/s/AKfycbyskOfnvOc85MOkcRITrxPqxLBY5aydp62OSxijvrAgWMKeIbVzXK0gBjgTHSJE_k9eIg/exec";
-        
         const CLAVE_ADMIN = "511";
         let registrosGlobales = [];
 
@@ -236,10 +234,18 @@
             return `${dia}/${mes}/${anio} ${hora}:${min}:${seg}`;
         }
 
+        // Función blindada para extraer la fecha limpia YYYY-MM-DD
         function limpiarFechaYMD(fechaStr) {
             if (!fechaStr) return "";
-            // Si viene con formato ISO de Google Sheets, extrae solo la parte YYYY-MM-DD
-            return String(fechaStr).split('T')[0];
+            let str = String(fechaStr);
+            if (str.includes('T')) {
+                str = str.split('T')[0];
+            }
+            // Si por alguna razón viene con hora larga en texto, extrae los primeros 10 caracteres (YYYY-MM-DD)
+            if (str.length >= 10) {
+                str = str.substring(0, 10);
+            }
+            return str;
         }
 
         function renderizarTabla() {
